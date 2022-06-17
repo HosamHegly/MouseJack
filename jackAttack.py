@@ -2,8 +2,8 @@ import argparse
 import os
 import random
 from threading import Thread
-from utils import nrf24_reset
-from utils import nrf24
+from lib import nrf24_reset
+from lib import nrf24
 import time
 import usb
 from progress.bar import IncrementalBar, ShadyBar, PixelBar, Bar, FillingSquaresBar, ChargingBar, FillingCirclesBar
