@@ -9,7 +9,7 @@ except ImportError:
     # Make sure this code does not break platforms without ioctl - if any...
     ioctl = lambda *args: None
 
-# Thanks to https://github.com/Paufurtado/usbreset.py
+
 USBDEVFS_RESET = ord('U') << (4 * 2) | 20
 
 

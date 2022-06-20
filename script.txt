@@ -1,0 +1,7 @@
+command terminal
+delay 100
+string subl
+delay 100
+command enter
+delay 100
+string you got hijacked
