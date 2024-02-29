@@ -28,11 +28,14 @@ Before using MouseJack, ensure your compatible dongle is plugged in.
 ## Scanning for Devices
 
 ## Executing a Keystroke Injection Attack
+
 To execute a keystroke injection attack, use:
+
 <img width="453" alt="image" src="https://github.com/HosamHegly/MouseJack/assets/57544654/df9d976c-9bda-4d93-aa15-ea9cedf5569e">
 
 <img width="182" alt="image" src="https://github.com/HosamHegly/MouseJack/assets/57544654/3fa415a8-7705-4c9c-aa81-ef4043286ad5">
 
 To scan for vulnerable devices, run:
+
 ![Uploading image.png…]()
 
